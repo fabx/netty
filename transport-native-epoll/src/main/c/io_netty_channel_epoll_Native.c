@@ -51,15 +51,15 @@ static int socketType;
 
 // util methods
 void throwRuntimeException(JNIEnv *env, char *message) {
-  (*env)->ThrowNew(env, runtimeExceptionClass, message);
+    (*env)->ThrowNew(env, runtimeExceptionClass, message);
 }
 
 void throwIOException(JNIEnv *env, char *message) {
-  (*env)->ThrowNew(env, ioExceptionClass, message);
+    (*env)->ThrowNew(env, ioExceptionClass, message);
 }
 
 void throwClosedChannelException(JNIEnv *env, char *message) {
-  (*env)->ThrowNew(env, closedChannelExceptionClass, message);
+    (*env)->ThrowNew(env, closedChannelExceptionClass, message);
 }
 
 void throwOutOfMemoryError( JNIEnv *env, char *message) {
@@ -153,7 +153,6 @@ void init_sockaddr(JNIEnv * env, jbyteArray address, jint scopeId, jint jport, s
     }
 
     (*env)->ReleaseByteArrayElements(env, address, addressBytes, JNI_ABORT);
-
 }
 
 static int socket_type() {
@@ -231,7 +230,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
         jobject directBuffer = (*env)->NewDirectByteBuffer(env, mem, 1);
         if (directBuffer == NULL) {
             throwOutOfMemoryError(env, "Error allocating native buffer");
-           return JNI_ERR;
+            return JNI_ERR;
         }
 
         jclass cls = (*env)->GetObjectClass(env, directBuffer);
@@ -368,7 +367,6 @@ JNIEXPORT jint JNICALL Java_io_netty_channel_epoll_Native_epollCreate(JNIEnv * e
     if (efd < 0) {
         int err = errno;
         throwRuntimeException(env, exceptionMessage("Error during epoll_create(...): ", err));
-        return -1;
     }
     return efd;
 }
@@ -409,7 +407,6 @@ JNIEXPORT jint JNICALL Java_io_netty_channel_epoll_Native_epollWait(JNIEnv * env
         if (ev[i].events & EPOLLRDHUP) {
             elements[i] |= EPOLL_RDHUP;
         }
-
         if (ev[i].events & EPOLLOUT) {
             elements[i] |= EPOLL_WRITE;
         }
