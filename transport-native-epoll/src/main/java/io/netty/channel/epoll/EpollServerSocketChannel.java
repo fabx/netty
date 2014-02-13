@@ -25,6 +25,10 @@ import io.netty.channel.socket.ServerSocketChannelConfig;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
+/**
+ * {@link ServerSocketChannel} implementation that uses linux EPOLL Edge-Triggered Mode for
+ * maximal performance.
+ */
 public final class EpollServerSocketChannel extends AbstractEpollChannel implements ServerSocketChannel {
 
     private final EpollServerSocketChannelConfig config;

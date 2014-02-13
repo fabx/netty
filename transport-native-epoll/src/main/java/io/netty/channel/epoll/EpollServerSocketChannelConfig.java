@@ -35,9 +35,6 @@ final class EpollServerSocketChannelConfig extends DefaultChannelConfig
     private final EpollServerSocketChannel channel;
     private volatile int backlog = NetUtil.SOMAXCONN;
 
-    /**
-     * Creates a new instance.
-     */
     EpollServerSocketChannelConfig(EpollServerSocketChannel channel) {
         super(channel);
         this.channel = channel;

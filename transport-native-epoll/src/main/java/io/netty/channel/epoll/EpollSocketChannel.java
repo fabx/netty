@@ -42,6 +42,10 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * {@link SocketChannel} implementation that uses linux EPOLL Edge-Triggered Mode for
+ * maximal performance.
+ */
 public final class EpollSocketChannel extends AbstractEpollChannel implements SocketChannel {
     private final EpollSocketChannelConfig config;
 
