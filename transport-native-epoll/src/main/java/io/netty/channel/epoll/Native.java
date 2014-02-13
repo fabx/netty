@@ -23,6 +23,7 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.Locale;
 
 /**
  * Native helper methods
@@ -34,6 +35,10 @@ final class Native {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte) 0xff, (byte) 0xff };
 
     static {
+        String name = System.getProperty("os.name").toLowerCase(Locale.UK).trim();
+        if (!name.startsWith("linux")) {
+            throw new IllegalStateException("Only supported on Linux");
+        }
         JNILoader.load("netty-transport-native-epoll", Native.class.getClassLoader());
     }
 
