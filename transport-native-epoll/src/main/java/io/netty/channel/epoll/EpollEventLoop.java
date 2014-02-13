@@ -48,8 +48,8 @@ final class EpollEventLoop extends SingleThreadEventLoop {
         WAKEN_UP_UPDATER = updater;
     }
 
-    private final int epfd;
-    private final int evfd;
+    private final int epollFd;
+    private final int eventFd;
     private final Map<Integer, AbstractEpollChannel> ids = new HashMap<Integer, AbstractEpollChannel>();
     private final long[] events;
 
@@ -65,25 +65,25 @@ final class EpollEventLoop extends SingleThreadEventLoop {
         super(parent, threadFactory, false);
         events = new long[maxEvents];
         boolean success = false;
-        int epfd = -1;
-        int evfd = -1;
+        int epollFd = -1;
+        int eventFd = -1;
         try {
-            this.epfd = epfd = Native.epollCreate();
-            this.evfd = evfd = Native.eventFd();
-            Native.epollCtlAdd(epfd, evfd, Native.EPOLLIN, 0);
+            this.epollFd = epollFd = Native.epollCreate();
+            this.eventFd = eventFd = Native.eventFd();
+            Native.epollCtlAdd(epollFd, eventFd, Native.EPOLLIN, 0);
             success = true;
         } finally {
             if (!success) {
-                if (epfd != -1) {
+                if (epollFd != -1) {
                     try {
-                        Native.close(epfd);
+                        Native.close(epollFd);
                     } catch (Exception e) {
                         // ignore
                     }
                 }
-                if (evfd != -1) {
+                if (eventFd != -1) {
                     try {
-                        Native.close(evfd);
+                        Native.close(eventFd);
                     } catch (Exception e) {
                         // ignore
                     }
@@ -117,7 +117,7 @@ final class EpollEventLoop extends SingleThreadEventLoop {
     protected void wakeup(boolean inEventLoop) {
         if (!inEventLoop && WAKEN_UP_UPDATER.compareAndSet(this, 0, 1)) {
             // write to the evfd which will then wake-up epoll_wait(...)
-            Native.eventFdWrite(evfd, 1L);
+            Native.eventFdWrite(eventFd, 1L);
         }
     }
 
@@ -127,7 +127,7 @@ final class EpollEventLoop extends SingleThreadEventLoop {
     void add(AbstractEpollChannel ch) {
         assert inEventLoop();
         int id = nextId();
-        Native.epollCtlAdd(epfd, ch.fd, ch.flags, id);
+        Native.epollCtlAdd(epollFd, ch.fd, ch.flags, id);
         ch.id = id;
         ids.put(id, ch);
     }
@@ -137,7 +137,7 @@ final class EpollEventLoop extends SingleThreadEventLoop {
      */
     void modify(AbstractEpollChannel ch) {
         assert inEventLoop();
-        Native.epollCtlMod(epfd, ch.fd, ch.flags, ch.id);
+        Native.epollCtlMod(epollFd, ch.fd, ch.flags, ch.id);
     }
 
     /**
@@ -148,7 +148,7 @@ final class EpollEventLoop extends SingleThreadEventLoop {
         if (ids.remove(ch.id) != null && ch.isOpen()) {
             // Remove the epoll. This is only needed if it's still open as otherwise it will be automatically
             // removed once the file-descriptor is closed.
-            Native.epollCtlDel(epfd, ch.fd);
+            Native.epollCtlDel(epollFd, ch.fd);
         }
     }
 
@@ -184,7 +184,7 @@ final class EpollEventLoop extends SingleThreadEventLoop {
             long timeoutMillis = (selectDeadLineNanos - currentTimeNanos + 500000L) / 1000000L;
             if (timeoutMillis <= 0) {
                 if (selectCnt == 0) {
-                    int ready = Native.epollWait(epfd, events, 0);
+                    int ready = Native.epollWait(epollFd, events, 0);
                     if (ready > 0) {
                         return ready;
                     }
@@ -192,7 +192,7 @@ final class EpollEventLoop extends SingleThreadEventLoop {
                 break;
             }
 
-            int selectedKeys = Native.epollWait(epfd, events, (int) timeoutMillis);
+            int selectedKeys = Native.epollWait(epollFd, events, (int) timeoutMillis);
             selectCnt ++;
 
             if (selectedKeys != 0 || oldWakenUp == 1 || wakenUp == 1 || hasTasks()) {
@@ -214,7 +214,7 @@ final class EpollEventLoop extends SingleThreadEventLoop {
                 int ready;
                 if (hasTasks()) {
                     // Non blocking just return what is ready directly without block
-                    ready = Native.epollWait(epfd, events, 0);
+                    ready = Native.epollWait(epollFd, events, 0);
                 } else {
                     ready = epollWait();
 
@@ -247,7 +247,7 @@ final class EpollEventLoop extends SingleThreadEventLoop {
                     // (OK - no wake-up required).
 
                     if (wakenUp == 1) {
-                        Native.eventFdWrite(evfd, 1L);
+                        Native.eventFdWrite(eventFd, 1L);
                     }
                 }
 
@@ -289,7 +289,7 @@ final class EpollEventLoop extends SingleThreadEventLoop {
     }
 
     private void closeAll() {
-        int ready = Native.epollWait(epfd, events, 0);
+        int ready = Native.epollWait(epollFd, events, 0);
         Collection<AbstractEpollChannel> channels = new ArrayList<AbstractEpollChannel>(ready);
 
         for (int i = 0; i < ready; i++) {
@@ -314,7 +314,7 @@ final class EpollEventLoop extends SingleThreadEventLoop {
             int id = (int) (ev >> 32L);
             if (id == 0) {
                 // consume wakeup event
-                Native.eventFdRead(evfd);
+                Native.eventFdRead(eventFd);
             } else {
                 boolean read = (ev & Native.EPOLLIN) != 0;
                 boolean write = (ev & Native.EPOLLOUT) != 0;
@@ -342,12 +342,12 @@ final class EpollEventLoop extends SingleThreadEventLoop {
     @Override
     protected void cleanup() {
         try {
-            Native.close(epfd);
+            Native.close(epollFd);
         } catch (IOException e) {
             logger.warn("Failed to close the epoll fd.", e);
         }
         try {
-            Native.close(evfd);
+            Native.close(eventFd);
         } catch (IOException e) {
             logger.warn("Failed to close the event fd.", e);
         }
