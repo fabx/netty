@@ -52,8 +52,10 @@ final class JNILoader {
             // Fall back to normal loading of JNI stuff
             System.loadLibrary(name);
         } else {
-            String unpackDirectory = SystemPropertyUtil.get("io.netty.jniloader.unpackdir",
-                    SystemPropertyUtil.get("java.io.tmpdir"));
+            String unpackDirectory = SystemPropertyUtil.get("io.netty.jniloader.unpackdir");
+            if (unpackDirectory == null) {
+                unpackDirectory = SystemPropertyUtil.get("java.io.tmpdir");
+            }
 
             int index = libname.lastIndexOf('.');
             String prefix = libname.substring(0, index);
@@ -107,7 +109,7 @@ final class JNILoader {
     }
 
     private static String osIdentifier() {
-        String name = System.getProperty("os.name").toLowerCase(Locale.UK).trim();
+        String name = SystemPropertyUtil.get("os.name").toLowerCase(Locale.UK).trim();
         if (name.startsWith("win")) {
             return "windows";
         }
@@ -122,9 +124,9 @@ final class JNILoader {
     }
 
     private static int bitMode() {
-        String prop = System.getProperty("sun.arch.data.model");
+        String prop = SystemPropertyUtil.get("sun.arch.data.model");
         if (prop == null) {
-            prop = System.getProperty("com.ibm.vm.bitmode");
+            prop = SystemPropertyUtil.get("com.ibm.vm.bitmode");
         }
         if (prop != null) {
             return Integer.parseInt(prop);
