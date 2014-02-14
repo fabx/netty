@@ -17,6 +17,7 @@ package io.netty.channel.epoll;
 
 
 import io.netty.channel.DefaultFileRegion;
+import io.netty.util.internal.JNILoader;
 
 import java.io.IOException;
 import java.net.Inet6Address;

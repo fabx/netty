@@ -13,10 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package io.netty.channel.epoll;
-
-
-import io.netty.util.internal.SystemPropertyUtil;
+package io.netty.util.internal;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -30,9 +27,8 @@ import java.util.regex.Pattern;
 /**
  * Helper class to load JNI resources.
  *
- * TODO: Maybe move this to io.netty.util.internal
  */
-final class JNILoader {
+public final class JNILoader {
 
     private static final Pattern REPLACE = Pattern.compile("\\W+");
 
@@ -43,7 +39,7 @@ final class JNILoader {
     /**
      * Load the given library with the specified {@link java.lang.ClassLoader}
      */
-    static void load(String name, ClassLoader loader) {
+    public static void load(String name, ClassLoader loader) {
         String libname = System.mapLibraryName(name);
         String path = "META-INF/native/" + osIdentifier() + bitMode() + '/' + libname;
 
